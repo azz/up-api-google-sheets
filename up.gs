@@ -20,7 +20,7 @@ function onOpen() {
 }
 
 function init_() {
-  const sheet = SpreadsheetApp.getActiveSheet().setName("Up API");
+  const sheet = SpreadsheetApp.getActiveSheet();
   const ui = SpreadsheetApp.getUi();
 
   const result = ui.prompt(
