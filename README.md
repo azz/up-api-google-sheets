@@ -1,8 +1,8 @@
 # up-api-google-sheets
 
-> Prototype for using the [Up Banking API](https://developer.up.com.au/) in Google Sheets.
+Prototype for using the [Up Banking API](https://developer.up.com.au/) in Google Sheets.
 
-> NOTE: The Up API is in beta release for personal use only. As such, this repo will not be published an Addon.
+> **NOTE:** The Up API is in beta release for personal use only. As such, this repo will not be published an Addon.
 
 ## Installation
 
