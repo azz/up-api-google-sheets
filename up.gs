@@ -178,10 +178,12 @@ function UP_CATEGORIES(pageSize = 100) {
       return [
         category.id,
         category.attributes.name,
-        category.relationships.parent.data.id,
+        category.relationships.parent.data
+          ? category.relationships.parent.data.id
+          : "all",
       ];
     });
-    return [UP_CATEGORIES_HEADINGS, ...table];
+    return [UP_CATEGORIES_HEADINGS, ...table, ["all", "All", ""]];
   });
 }
 
