@@ -145,9 +145,12 @@ function UP_TRANSACTIONS_FOR_ACCOUNT(
   type = "ALL"
 ) {
   if (!accountId) return "accountId is required.";
-  return up_(`accounts/${accountId}/transactions?${hackyUriEncode_(filterQuery)}`, {
-    tabulate: (data) => tabulateTransactions_(type, data),
-  });
+  return up_(
+    `accounts/${accountId}/transactions?${hackyUriEncode_(filterQuery)}`,
+    {
+      tabulate: (data) => tabulateTransactions_(type, data),
+    }
+  );
 }
 
 function tabulateTransactions_(type, transactions) {
@@ -263,17 +266,10 @@ function UP_PING() {
   return up_(`util/ping`, {
     paginate: false,
     tabulate: (response) => ["Up API Status", response.meta.statusEmoji],
-    handleError: (error) => [
-      "Up API Status",
-      error.message.includes("401") ? "Invalid Token" : error.message,
-    ],
   });
 }
 
-function up_(
-  path,
-  { paginate = true, tabulate, handleError = (e) => e.message }
-) {
+function up_(path, { paginate = true, tabulate }) {
   const token = CacheService.getUserCache().get("UP_API_TOKEN");
   if (!token) {
     throw new Error('Please navigate to "Up API" → "Set Up..."');
@@ -285,8 +281,18 @@ function up_(
     do {
       const json = UrlFetchApp.fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
+        muteHttpExceptions: true,
       }).getContentText();
       const response = JSON.parse(json);
+      if (response.errors) {
+        return [["API Error"]].concat(
+          response.errors.map((error) => [
+            error.status,
+            error.title,
+            error.detail,
+          ])
+        );
+      }
       if (!paginate) {
         return tabulate(response);
       }
@@ -295,7 +301,7 @@ function up_(
     } while (url && data.length < MAX_RECORDS);
     return tabulate(data);
   } catch (error) {
-    return handleError(error);
+    return ["ERROR", error.message];
   }
 }
 
