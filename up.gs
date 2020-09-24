@@ -15,6 +15,7 @@ function onOpen() {
     null,
     { name: "UP_PING", functionName: "insertUpPing_" },
     { name: "UP_ACCOUNTS", functionName: "insertUpAccounts_" },
+    { name: "UP_CATEGORIES", functionName: "insertUpCategories_" },
     { name: "UP_TRANSACTIONS", functionName: "insertUpTransactions_" },
   ]);
 }
@@ -39,6 +40,9 @@ function init_() {
     result.getResponseText(),
     TOKEN_CACHE_DURATION_SECONDS
   );
+
+  // Force a recalculation every hour (and re-authentication when appropriate)
+  SpreadsheetApp.getActive().setRecalculationInterval(SpreadsheetApp.RecalculationInterval.HOUR);
 
   insert_("=UP_PING()", 1, sheet.getRange("A1"));
 }
@@ -71,10 +75,13 @@ function insertUpPing_() {
   insert_("=UP_PING()", 1);
 }
 function insertUpTransactions_() {
-  insert_("=UP_TRANSACTIONS(false, 100)", UP_TRANSACTIONS_HEADINGS.length);
+  insert_('=UP_TRANSACTIONS()', UP_TRANSACTIONS_HEADINGS.length);
 }
 function insertUpAccounts_() {
-  insert_("=UP_ACCOUNTS(100)", UP_ACCOUNTS_HEADINGS.length);
+  insert_("=UP_ACCOUNTS()", UP_ACCOUNTS_HEADINGS.length);
+}
+function insertUpCategories_() {
+  insert_("=UP_CATEGORIES()", UP_CATEGORIES_HEADINGS.length);
 }
 
 const UP_TRANSACTIONS_HEADINGS = [
@@ -92,16 +99,18 @@ const UP_TRANSACTIONS_HEADINGS = [
 ];
 
 /**
- * @param {boolean} onlyDebits Only return debits
- * @param {number} input Page Size
+ * @param {boolean} type 'ALL', 'DEBIT', 'CREDIT'
+ * @param {number} pageSize Page Size
  * @return Up Transactions
  * @customfunction
  */
-function UP_TRANSACTIONS(onlyDebits = false, pageSize = 100) {
+function UP_TRANSACTIONS(type = 'ALL', pageSize = 10) {
   return up_(`transactions?page[size]=${pageSize}`, (response) => {
-    const transactions = onlyDebits
-      ? response.data.filter((tx) => tx.attributes.amount.valueInBaseUnits < 0)
-      : response.data;
+    let transactions = response.data;
+    if (type === 'DEBIT')
+      transactions = transactions.filter((tx) => tx.attributes.amount.valueInBaseUnits < 0)
+    if (type === 'CREDIT')
+      transactions = transactions.filter((tx) => tx.attributes.amount.valueInBaseUnits > 0)
 
     const table = transactions.map((transaction) => {
       const attributes = transaction.attributes;
@@ -136,11 +145,11 @@ const UP_ACCOUNTS_HEADINGS = [
 ];
 
 /**
- * @param {number} input Page Size
+ * @param {number} pageSize Page Size
  * @return Up Accounts
  * @customfunction
  */
-function UP_ACCOUNTS(pageSize = 100) {
+function UP_ACCOUNTS(pageSize = 50) {
   return up_(`accounts?page[size]=${pageSize}`, (response) => {
     const table = response.data.map((account) => {
       const attributes = account.attributes;
@@ -153,6 +162,26 @@ function UP_ACCOUNTS(pageSize = 100) {
       ];
     });
     return [UP_ACCOUNTS_HEADINGS, ...table];
+  });
+}
+
+const UP_CATEGORIES_HEADINGS = ["Category ID", "Category Name", "Parent Category ID"];
+
+/**
+ * @param {number} pageSize Page Size
+ * @return Up Categories
+ * @customfunction
+ */
+function UP_CATEGORIES(pageSize = 100) {
+  return up_(`categories?page[size]=${pageSize}`, (response) => {
+    const table = response.data.map((category) => {
+      return [
+        category.id,
+        category.attributes.name,
+        category.relationships.parent.data.id,
+      ];
+    });
+    return [UP_CATEGORIES_HEADINGS, ...table];
   });
 }
 
