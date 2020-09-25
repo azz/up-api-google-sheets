@@ -1,0 +1,28 @@
+{
+  "name": "@azz/up-api-google-sheets",
+  "version": "1.0.0",
+  "description": "Google Apps Script for using the Up Banking API in Google Sheets",
+  "repository": "azz/up-api-google-sheets",
+  "keywords": [
+    "up-banking",
+    "google-sheets"
+  ],
+  "author": "Lucas Azzola <lucas.azzola@ferocia.com.au>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/azz/up-api-google-sheets/issues"
+  },
+  "homepage": "https://github.com/azz/up-api-google-sheets#readme",
+  "devDependencies": {
+    "@types/google-apps-script": "^1.0.16",
+    "prettier": "^2.1.2",
+    "xo": "^0.33.1"
+  },
+  "scripts": {
+    "test": "xo",
+    "fix": "xo --fix && prettier --write up.js"
+  },
+  "xo": {
+    "space": true
+  }
+}

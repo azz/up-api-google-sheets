@@ -2,9 +2,46 @@
  * @OnlyCurrentDoc Limits the script to only accessing the current sheet.
  */
 
+/// <reference types="@types/google-apps-script/google-apps-script.spreadsheet" />
+/* global CacheService, UrlFetchApp, SpreadsheetApp */
+/* eslint-disable no-unused-vars */
+
 const TOKEN_CACHE_DURATION_SECONDS = 60 * 60;
 const TOKEN_CACHE_DURATION_HUMAN = "1 hour";
 const MAX_RECORDS = 1000;
+
+const DARK_GREEN = "#385454";
+const DARK_BLUE = "#242430";
+const X_DARK_BLUE = "#1A1A22";
+const API_BLUE = "#3EA9F5";
+const ALT_WHITE = "#FBFBFA";
+const BRAND_ORANGE = "#FF7A64";
+const BRAND_YELLOW = "#FFF06B";
+const BRAND_BLUE = "#4E6280";
+const LOGO_BLUE = "#3EA9F5";
+const BRAND_PINK = "#FF8BB5";
+const BRAND_GREEN = "#305555";
+const AQUA = "#25BBB8";
+const AMOUNT_GREEN = "#00BC83";
+const RED = "#EF3B3D";
+const GREY = "#D2D2D2";
+const ANOTHER_GREY = "#A4A4A8";
+const DARK_GREY = "#34333B";
+const YELLOW = "#FFEF6B";
+const YELLOW_LIGHT = "#FFFCE2";
+const WHITE = "#FFFFFF";
+
+const THEME = new Map([
+  [SpreadsheetApp.ThemeColorType.BACKGROUND, BRAND_YELLOW],
+  [SpreadsheetApp.ThemeColorType.TEXT, DARK_BLUE],
+  [SpreadsheetApp.ThemeColorType.ACCENT1, BRAND_ORANGE],
+  [SpreadsheetApp.ThemeColorType.ACCENT2, BRAND_BLUE],
+  [SpreadsheetApp.ThemeColorType.ACCENT3, BRAND_GREEN],
+  [SpreadsheetApp.ThemeColorType.ACCENT4, YELLOW_LIGHT],
+  [SpreadsheetApp.ThemeColorType.ACCENT5, BRAND_PINK],
+  [SpreadsheetApp.ThemeColorType.ACCENT6, AQUA],
+  [SpreadsheetApp.ThemeColorType.HYPERLINK, LOGO_BLUE],
+]);
 
 /**
  * A special function that runs when the spreadsheet is open, used to add a
@@ -20,7 +57,8 @@ function onOpen() {
       ui
         .createMenu("Transactions")
         .addItem("All Transactions", "insertUpTransactions_")
-        .addItem("Transactions for Account", "insertTransactionsForAccount_")
+        .addItem("Transactions between dates", "insertUpTransactionsBetween_")
+        .addItem("Transactions for Account", "insertUpTransactionsForAccount_")
     )
     .addSubMenu(
       ui.createMenu("Accounts").addItem("All Accounts", "insertUpAccounts_")
@@ -56,12 +94,23 @@ function init_() {
     TOKEN_CACHE_DURATION_SECONDS
   );
 
+  const theme = SpreadsheetApp.getActive().getSpreadsheetTheme();
+  for (const [key, value] of THEME.entries()) {
+    theme.setConcreteColor(
+      key,
+      SpreadsheetApp.newColor().setRgbColor(value).build()
+    );
+  }
+
   // Force a recalculation every hour (and re-authentication when appropriate)
   SpreadsheetApp.getActive().setRecalculationInterval(
     SpreadsheetApp.RecalculationInterval.HOUR
   );
 
-  insert_("=UP_PING()", 1, sheet.getRange("A1"));
+  const statusRange = sheet.getRange("A1");
+  if (statusRange.isBlank()) {
+    insert_("=UP_PING()", 1, statusRange);
+  }
 }
 
 function insert_(formula, numberOfColumns, range) {
@@ -73,11 +122,11 @@ function insert_(formula, numberOfColumns, range) {
   headingRange
     .setTextStyle(
       SpreadsheetApp.newTextStyle()
-        .setForegroundColor("#1a1a22")
+        .setForegroundColor(X_DARK_BLUE)
         .setBold(true)
         .build()
     )
-    .setBackground("#ff7a64")
+    .setBackground(BRAND_ORANGE)
     .activate();
 
   SpreadsheetApp.flush();
@@ -90,18 +139,30 @@ function insert_(formula, numberOfColumns, range) {
 function insertUpPing_() {
   insert_("=UP_PING()", 1);
 }
+
 function insertUpTags_() {
   insert_("=UP_TAGS()", UP_TAGS_HEADINGS.length);
 }
+
 function insertUpTransactions_() {
   insert_("=UP_TRANSACTIONS()", UP_TRANSACTIONS_HEADINGS.length);
 }
+
+function insertUpTransactionsBetween_() {
+  insert_(
+    "=UP_TRANSACTIONS_BETWEEN(TODAY() - 30, TODAY())",
+    UP_TRANSACTIONS_HEADINGS.length
+  );
+}
+
 function insertUpTransactionsForAccount_() {
   insert_("=UP_TRANSACTIONS_FOR_ACCOUNT()", UP_TRANSACTIONS_HEADINGS.length);
 }
+
 function insertUpAccounts_() {
   insert_("=UP_ACCOUNTS()", UP_ACCOUNTS_HEADINGS.length);
 }
+
 function insertUpCategories_() {
   insert_("=UP_CATEGORIES()", UP_CATEGORIES_HEADINGS.length);
 }
@@ -133,6 +194,26 @@ function UP_TRANSACTIONS(filterQuery = "", type = "ALL") {
 }
 
 /**
+ * @param {Date} since The start date
+ * @param {Date} until The end date
+ * @param {string} filterQuery The filter querystring to use, e.g. "filter[status]=HELD&filter[category]=booze"
+ * @param {string} type 'ALL', 'DEBIT', 'CREDIT'
+ * @return Up Transactions
+ * @customfunction
+ */
+function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = "", type = "ALL") {
+  return up_(
+    "transactions" +
+      `?filter[since]=${encodeDate_(since)}` +
+      `&filter[until]=${encodeDate_(until)}` +
+      `&${hackyUriEncode_(filterQuery)}`,
+    {
+      tabulate: (data) => tabulateTransactions_(type, data),
+    }
+  );
+}
+
+/**
  * @param {string} accountId Up account's ID
  * @param {string} filterQuery The filter querystring to use, e.g. "filter[status]=HELD&filter[category]=booze"
  * @param {string} type 'ALL', 'DEBIT', 'CREDIT'
@@ -144,7 +225,10 @@ function UP_TRANSACTIONS_FOR_ACCOUNT(
   filterQuery = "",
   type = "ALL"
 ) {
-  if (!accountId) return "accountId is required.";
+  if (!accountId) {
+    return "accountId is required.";
+  }
+
   return up_(
     `accounts/${accountId}/transactions?${hackyUriEncode_(filterQuery)}`,
     {
@@ -154,14 +238,17 @@ function UP_TRANSACTIONS_FOR_ACCOUNT(
 }
 
 function tabulateTransactions_(type, transactions) {
-  if (type === "DEBIT")
+  if (type === "DEBIT") {
     transactions = transactions.filter(
       (tx) => tx.attributes.amount.valueInBaseUnits < 0
     );
-  if (type === "CREDIT")
+  }
+
+  if (type === "CREDIT") {
     transactions = transactions.filter(
       (tx) => tx.attributes.amount.valueInBaseUnits > 0
     );
+  }
 
   const table = transactions.map((transaction) => {
     const attributes = transaction.attributes;
@@ -200,7 +287,7 @@ const UP_ACCOUNTS_HEADINGS = [
  * @customfunction
  */
 function UP_ACCOUNTS() {
-  return up_(`accounts`, {
+  return up_("accounts", {
     tabulate(data) {
       const table = data.map((account) => {
         const attributes = account.attributes;
@@ -229,7 +316,7 @@ const UP_CATEGORIES_HEADINGS = [
  * @customfunction
  */
 function UP_CATEGORIES() {
-  return up_(`categories`, {
+  return up_("categories", {
     tabulate(data) {
       const table = data.map((category) => [
         category.id,
@@ -250,7 +337,7 @@ const UP_TAGS_HEADINGS = ["Tag"];
  * @customfunction
  */
 function UP_TAGS() {
-  return up_(`tags`, {
+  return up_("tags", {
     tabulate(data) {
       const table = data.map((tag) => [tag.id]);
       return [UP_TAGS_HEADINGS, ...table];
@@ -263,7 +350,7 @@ function UP_TAGS() {
  * @customfunction
  */
 function UP_PING() {
-  return up_(`util/ping`, {
+  return up_("util/ping", {
     paginate: false,
     tabulate: (response) => ["Up API Status", response.meta.statusEmoji],
   });
@@ -277,7 +364,7 @@ function up_(path, { paginate = true, tabulate }) {
 
   try {
     let url = `https://api.up.com.au/api/v1/${path}`;
-    let data = [];
+    const data = [];
     do {
       const json = UrlFetchApp.fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -293,16 +380,23 @@ function up_(path, { paginate = true, tabulate }) {
           ])
         );
       }
+
       if (!paginate) {
         return tabulate(response);
       }
+
       url = response.links ? response.links.next : null;
       data.push(...response.data);
     } while (url && data.length < MAX_RECORDS);
+
     return tabulate(data);
   } catch (error) {
     return ["ERROR", error.message];
   }
+}
+
+function encodeDate_(date) {
+  return encodeURIComponent(new Date(date).toISOString());
 }
 
 /* 🙈 */
