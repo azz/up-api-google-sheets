@@ -79,9 +79,11 @@ function init_() {
 
   const result = ui.prompt(
     "Up API",
-    "Enter your Up API Personal Access Token. This token will be cached for " +
+    "Enter your Up API Personal Access Token.\n" +
+      "You can retrieve this from https://api.up.com.au.\n\n" +
+      "You will be logged in for " +
       TOKEN_CACHE_DURATION_HUMAN +
-      ".",
+      ". After this time, your data will be cleared and you must provide your token again.",
     ui.ButtonSet.OK_CANCEL
   );
   if (result.getSelectedButton() !== ui.Button.OK) {
@@ -381,7 +383,11 @@ function UP_PING() {
 function up_(path, { paginate = true, tabulate }) {
   const token = CacheService.getUserCache().get("UP_API_TOKEN");
   if (!token) {
-    throw new Error('Please navigate to "Up API" → "Set Up..."');
+    return [
+      "ERROR",
+      "Token not provided",
+      'Please navigate to "Up API" → "Set Up..."',
+    ];
   }
 
   try {
