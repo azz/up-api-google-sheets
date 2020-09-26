@@ -43,7 +43,7 @@ const THEME = new Map([
   [SpreadsheetApp.ThemeColorType.HYPERLINK, LOGO_BLUE],
 ]);
 
-/**
+/*
  * A special function that runs when the spreadsheet is open, used to add a
  * custom menu to the spreadsheet.
  */
@@ -182,9 +182,12 @@ const UP_TRANSACTIONS_HEADINGS = [
 ];
 
 /**
- * @param {string} filterQuery The filter querystring to use, e.g. "filter[status]=HELD&filter[category]=booze"
- * @param {string} type 'ALL', 'DEBIT', 'CREDIT'
+ * Retrieve transactions across all of your Up accounts.
+ *
+ * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
+ * @param {"DEBIT" | "CREDIT"} type Further filter transactions by direction (ALL/CREDIT/DEBIT).
  * @return Up Transactions
+ * @example =UP_TRANSACTIONS("filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
  * @customfunction
  */
 function UP_TRANSACTIONS(filterQuery = "", type = "ALL") {
@@ -194,10 +197,14 @@ function UP_TRANSACTIONS(filterQuery = "", type = "ALL") {
 }
 
 /**
- * @param {Date} since The start date
- * @param {Date} until The end date
- * @param {string} filterQuery The filter querystring to use, e.g. "filter[status]=HELD&filter[category]=booze"
- * @param {string} type 'ALL', 'DEBIT', 'CREDIT'
+ * Retrieve all transactions between two dates.
+ *
+ * @param {Date} since The start date.
+ * @param {Date} until The end date.
+ * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
+ * @param {"DEBIT" | "CREDIT"} type Further filter transactions by direction (ALL/CREDIT/DEBIT).
+ * @example =UP_TRANSACTIONS_BETWEEN(TODAY() - 7, TODAY()) // All transactions in the last week.
+ * @example =UP_TRANSACTIONS_BETWEEN(A1, B1) // All transactions between the dates set in cells `A1` and `B1`.
  * @return Up Transactions
  * @customfunction
  */
@@ -214,10 +221,13 @@ function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = "", type = "ALL") {
 }
 
 /**
- * @param {string} accountId Up account's ID
- * @param {string} filterQuery The filter querystring to use, e.g. "filter[status]=HELD&filter[category]=booze"
- * @param {string} type 'ALL', 'DEBIT', 'CREDIT'
- * @return Up Transactions for Account
+ * Retrieve transactions from a specific Up account.
+ *
+ * @param {string} accountId The Up Account ID.
+ * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
+ * @param {"DEBIT" | "CREDIT"} type Further filter transactions by direction (ALL/CREDIT/DEBIT).
+ * @return Up Transactions
+ * @example =UP_TRANSACTIONS_FOR_ACCOUNT("aaaa-bbbb-cccc-dddd-eee") // All transactions for the specified account.
  * @customfunction
  */
 function UP_TRANSACTIONS_FOR_ACCOUNT(
@@ -283,7 +293,10 @@ const UP_ACCOUNTS_HEADINGS = [
 ];
 
 /**
+ * Retrieve all your Up accounts, including balances.
+ *
  * @return Up Accounts
+ * @example =UP_ACCOUNTS() // Get all accounts.
  * @customfunction
  */
 function UP_ACCOUNTS() {
@@ -312,7 +325,10 @@ const UP_CATEGORIES_HEADINGS = [
 ];
 
 /**
+ * Retrieve all Up pre-defined categories, including parent categories.
+ *
  * @return Up Categories
+ * @example =UP_CATEGORIES() // Get all categories.
  * @customfunction
  */
 function UP_CATEGORIES() {
@@ -333,7 +349,10 @@ function UP_CATEGORIES() {
 const UP_TAGS_HEADINGS = ["Tag"];
 
 /**
+ * Retrieve all your user-defined tags.
+ *
  * @return Up Tags
+ * @example =UP_TAGS() // Get all tags.
  * @customfunction
  */
 function UP_TAGS() {
@@ -346,7 +365,10 @@ function UP_TAGS() {
 }
 
 /**
+ * Ping the Up API to validate your token.
+ *
  * @return Up Ping
+ * @example =UP_PING() // Ping the API.
  * @customfunction
  */
 function UP_PING() {
