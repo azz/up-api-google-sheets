@@ -77,6 +77,9 @@ function init_() {
   const sheet = SpreadsheetApp.getActiveSheet();
   const ui = SpreadsheetApp.getUi();
 
+  // TODO: after the Up API supports, OAuth2, we won't need to use tokens!
+  // https://developers.google.com/gsuite/add-ons/how-tos/non-google-services
+
   const result = ui.prompt(
     "Up API",
     "Enter your Up API Personal Access Token.\n" +
