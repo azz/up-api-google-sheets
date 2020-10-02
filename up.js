@@ -6,41 +6,45 @@
 /* global CacheService, UrlFetchApp, SpreadsheetApp */
 /* eslint-disable no-unused-vars */
 
+const {ThemeColorType, RecalculationInterval} = SpreadsheetApp;
+
 const TOKEN_CACHE_DURATION_SECONDS = 60 * 60;
-const TOKEN_CACHE_DURATION_HUMAN = "1 hour";
+const TOKEN_CACHE_DURATION_HUMAN = '1 hour';
 const MAX_RECORDS = 1000;
 
-const DARK_GREEN = "#385454";
-const DARK_BLUE = "#242430";
-const X_DARK_BLUE = "#1A1A22";
-const API_BLUE = "#3EA9F5";
-const ALT_WHITE = "#FBFBFA";
-const BRAND_ORANGE = "#FF7A64";
-const BRAND_YELLOW = "#FFF06B";
-const BRAND_BLUE = "#4E6280";
-const LOGO_BLUE = "#3EA9F5";
-const BRAND_PINK = "#FF8BB5";
-const BRAND_GREEN = "#305555";
-const AQUA = "#25BBB8";
-const AMOUNT_GREEN = "#00BC83";
-const RED = "#EF3B3D";
-const GREY = "#D2D2D2";
-const ANOTHER_GREY = "#A4A4A8";
-const DARK_GREY = "#34333B";
-const YELLOW = "#FFEF6B";
-const YELLOW_LIGHT = "#FFFCE2";
-const WHITE = "#FFFFFF";
+const APP_NAME = 'Up API';
+
+const DARK_GREEN = '#385454';
+const DARK_BLUE = '#242430';
+const X_DARK_BLUE = '#1A1A22';
+const API_BLUE = '#3EA9F5';
+const ALT_WHITE = '#FBFBFA';
+const BRAND_ORANGE = '#FF7A64';
+const BRAND_YELLOW = '#FFF06B';
+const BRAND_BLUE = '#4E6280';
+const LOGO_BLUE = '#3EA9F5';
+const BRAND_PINK = '#FF8BB5';
+const BRAND_GREEN = '#305555';
+const AQUA = '#25BBB8';
+const AMOUNT_GREEN = '#00BC83';
+const RED = '#EF3B3D';
+const GREY = '#D2D2D2';
+const ANOTHER_GREY = '#A4A4A8';
+const DARK_GREY = '#34333B';
+const YELLOW = '#FFEF6B';
+const YELLOW_LIGHT = '#FFFCE2';
+const WHITE = '#FFFFFF';
 
 const THEME = new Map([
-  [SpreadsheetApp.ThemeColorType.BACKGROUND, BRAND_YELLOW],
-  [SpreadsheetApp.ThemeColorType.TEXT, DARK_BLUE],
-  [SpreadsheetApp.ThemeColorType.ACCENT1, BRAND_ORANGE],
-  [SpreadsheetApp.ThemeColorType.ACCENT2, BRAND_BLUE],
-  [SpreadsheetApp.ThemeColorType.ACCENT3, BRAND_GREEN],
-  [SpreadsheetApp.ThemeColorType.ACCENT4, YELLOW_LIGHT],
-  [SpreadsheetApp.ThemeColorType.ACCENT5, BRAND_PINK],
-  [SpreadsheetApp.ThemeColorType.ACCENT6, AQUA],
-  [SpreadsheetApp.ThemeColorType.HYPERLINK, LOGO_BLUE],
+  [ThemeColorType.BACKGROUND, BRAND_YELLOW],
+  [ThemeColorType.TEXT, DARK_BLUE],
+  [ThemeColorType.ACCENT1, BRAND_ORANGE],
+  [ThemeColorType.ACCENT2, BRAND_BLUE],
+  [ThemeColorType.ACCENT3, BRAND_GREEN],
+  [ThemeColorType.ACCENT4, YELLOW_LIGHT],
+  [ThemeColorType.ACCENT5, BRAND_PINK],
+  [ThemeColorType.ACCENT6, AQUA],
+  [ThemeColorType.HYPERLINK, LOGO_BLUE],
 ]);
 
 /*
@@ -50,30 +54,32 @@ const THEME = new Map([
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
-  ui.createMenu("Up API")
-    .addItem("Set Up...", "init_")
+  ui.createAddonMenu(APP_NAME)
+    .addItem('Set Up...', 'init_')
+    .addItem('Log out', 'logOut_')
     .addSeparator()
     .addSubMenu(
       ui
-        .createMenu("Transactions")
-        .addItem("All Transactions", "insertUpTransactions_")
-        .addItem("Transactions between dates", "insertUpTransactionsBetween_")
-        .addItem("Transactions for Account", "insertUpTransactionsForAccount_")
+        .createMenu('Transactions')
+        .addItem('All Transactions', 'insertUpTransactions_')
+        .addItem('Transactions between dates', 'insertUpTransactionsBetween_')
+        .addItem('Transactions for Account', 'insertUpTransactionsForAccount_'),
     )
     .addSubMenu(
-      ui.createMenu("Accounts").addItem("All Accounts", "insertUpAccounts_")
+      ui.createMenu('Accounts').addItem('All Accounts', 'insertUpAccounts_'),
     )
     .addSubMenu(
       ui
-        .createMenu("Categories")
-        .addItem("All Categories", "insertUpCategories_")
+        .createMenu('Categories')
+        .addItem('All Categories', 'insertUpCategories_'),
     )
-    .addSubMenu(ui.createMenu("Tags").addItem("All Tags", "insertUpTags_"))
-    .addSubMenu(ui.createMenu("Utilities").addItem("Ping", "insertUpPing_"))
+    .addSubMenu(ui.createMenu('Tags').addItem('All Tags', 'insertUpTags_'))
+    .addSubMenu(ui.createMenu('Utilities').addItem('Ping', 'insertUpPing_'))
     .addToUi();
 }
 
 function init_() {
+  const doc = SpreadsheetApp.getActive();
   const sheet = SpreadsheetApp.getActiveSheet();
   const ui = SpreadsheetApp.getUi();
 
@@ -81,40 +87,55 @@ function init_() {
   // https://developers.google.com/gsuite/add-ons/how-tos/non-google-services
 
   const result = ui.prompt(
-    "Up API",
-    "Enter your Up API Personal Access Token.\n" +
-      "You can retrieve this from https://api.up.com.au.\n\n" +
-      "You will be logged in for " +
+    APP_NAME,
+    'Enter your Up API Personal Access Token.\n' +
+      'You can retrieve this from https://api.up.com.au.\n\n' +
+      'You will be logged in for ' +
       TOKEN_CACHE_DURATION_HUMAN +
-      ". After this time, your data will be cleared and you must provide your token again.",
-    ui.ButtonSet.OK_CANCEL
+      '. After this time, your data will be cleared and you must provide your token again.',
+    ui.ButtonSet.OK_CANCEL,
   );
   if (result.getSelectedButton() !== ui.Button.OK) {
     return;
   }
 
   CacheService.getUserCache().put(
-    "UP_API_TOKEN",
+    'UP_API_TOKEN',
     result.getResponseText(),
-    TOKEN_CACHE_DURATION_SECONDS
+    TOKEN_CACHE_DURATION_SECONDS,
   );
 
   const theme = SpreadsheetApp.getActive().getSpreadsheetTheme();
   for (const [key, value] of THEME.entries()) {
     theme.setConcreteColor(
       key,
-      SpreadsheetApp.newColor().setRgbColor(value).build()
+      SpreadsheetApp.newColor().setRgbColor(value).build(),
     );
   }
 
   // Force a recalculation every hour (and re-authentication when appropriate)
-  SpreadsheetApp.getActive().setRecalculationInterval(
-    SpreadsheetApp.RecalculationInterval.HOUR
-  );
+  doc.setRecalculationInterval(RecalculationInterval.HOUR);
 
-  const statusRange = sheet.getRange("A1");
+  const statusRange = sheet.getRange('A1:B1');
   if (statusRange.isBlank()) {
-    insert_("=UP_PING()", 1, statusRange);
+    insert_('=UP_PING()', 1, statusRange);
+    // Define a named range we can use to force other formulas to recalculate
+    doc.setNamedRange('UpStatus', statusRange);
+  }
+}
+
+function logOut_() {
+  const cache = CacheService.getUserCache();
+  const ui = SpreadsheetApp.getUi();
+  if (cache.get('UP_API_TOKEN')) {
+    cache.remove('UP_API_TOKEN');
+    ui.alert(
+      APP_NAME,
+      'You have been successfully logged out.',
+      ui.ButtonSet.OK,
+    );
+  } else {
+    ui.alert(APP_NAME, 'You are not currently logged in.', ui.ButtonSet.OK);
   }
 }
 
@@ -129,7 +150,7 @@ function insert_(formula, numberOfColumns, range) {
       SpreadsheetApp.newTextStyle()
         .setForegroundColor(X_DARK_BLUE)
         .setBold(true)
-        .build()
+        .build(),
     )
     .setBackground(BRAND_ORANGE)
     .activate();
@@ -137,53 +158,53 @@ function insert_(formula, numberOfColumns, range) {
   SpreadsheetApp.flush();
   sheet.autoResizeColumns(
     range.getColumn(),
-    range.getColumn() + numberOfColumns
+    range.getColumn() + numberOfColumns,
   );
 }
 
 function insertUpPing_() {
-  insert_("=UP_PING()", 1);
+  insert_('=UP_PING()', 1);
 }
 
 function insertUpTags_() {
-  insert_("=UP_TAGS()", UP_TAGS_HEADINGS.length);
+  insert_('=UP_TAGS()', UP_TAGS_HEADINGS.length);
 }
 
 function insertUpTransactions_() {
-  insert_("=UP_TRANSACTIONS()", UP_TRANSACTIONS_HEADINGS.length);
+  insert_('=UP_TRANSACTIONS()', UP_TRANSACTIONS_HEADINGS.length);
 }
 
 function insertUpTransactionsBetween_() {
   insert_(
-    "=UP_TRANSACTIONS_BETWEEN(TODAY() - 30, TODAY())",
-    UP_TRANSACTIONS_HEADINGS.length
+    '=UP_TRANSACTIONS_BETWEEN(TODAY() - 30, TODAY())',
+    UP_TRANSACTIONS_HEADINGS.length,
   );
 }
 
 function insertUpTransactionsForAccount_() {
-  insert_("=UP_TRANSACTIONS_FOR_ACCOUNT()", UP_TRANSACTIONS_HEADINGS.length);
+  insert_('=UP_TRANSACTIONS_FOR_ACCOUNT()', UP_TRANSACTIONS_HEADINGS.length);
 }
 
 function insertUpAccounts_() {
-  insert_("=UP_ACCOUNTS()", UP_ACCOUNTS_HEADINGS.length);
+  insert_('=UP_ACCOUNTS()', UP_ACCOUNTS_HEADINGS.length);
 }
 
 function insertUpCategories_() {
-  insert_("=UP_CATEGORIES()", UP_CATEGORIES_HEADINGS.length);
+  insert_('=UP_CATEGORIES()', UP_CATEGORIES_HEADINGS.length);
 }
 
 const UP_TRANSACTIONS_HEADINGS = [
-  "Created At",
-  "Settled At",
-  "Status",
-  "Direction",
-  "Currency",
-  "Value",
-  "Description",
-  "Category",
-  "Parent Category",
-  "Tags",
-  "Message",
+  'Created At',
+  'Settled At',
+  'Status',
+  'Direction',
+  'Currency',
+  'Value',
+  'Description',
+  'Category',
+  'Parent Category',
+  'Tags',
+  'Message',
 ];
 
 /**
@@ -195,7 +216,7 @@ const UP_TRANSACTIONS_HEADINGS = [
  * @example =UP_TRANSACTIONS("filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
  * @customfunction
  */
-function UP_TRANSACTIONS(filterQuery = "", type = "ALL") {
+function UP_TRANSACTIONS(filterQuery = '', type = 'ALL') {
   return up_(`transactions?${hackyUriEncode_(filterQuery)}`, {
     tabulate: (data) => tabulateTransactions_(type, data),
   });
@@ -213,15 +234,15 @@ function UP_TRANSACTIONS(filterQuery = "", type = "ALL") {
  * @return Up Transactions
  * @customfunction
  */
-function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = "", type = "ALL") {
+function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = '', type = 'ALL') {
   return up_(
-    "transactions" +
+    'transactions' +
       `?filter[since]=${encodeDate_(since)}` +
       `&filter[until]=${encodeDate_(until)}` +
       `&${hackyUriEncode_(filterQuery)}`,
     {
       tabulate: (data) => tabulateTransactions_(type, data),
-    }
+    },
   );
 }
 
@@ -237,31 +258,31 @@ function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = "", type = "ALL") {
  */
 function UP_TRANSACTIONS_FOR_ACCOUNT(
   accountId,
-  filterQuery = "",
-  type = "ALL"
+  filterQuery = '',
+  type = 'ALL',
 ) {
   if (!accountId) {
-    return "accountId is required.";
+    return 'accountId is required.';
   }
 
   return up_(
     `accounts/${accountId}/transactions?${hackyUriEncode_(filterQuery)}`,
     {
       tabulate: (data) => tabulateTransactions_(type, data),
-    }
+    },
   );
 }
 
 function tabulateTransactions_(type, transactions) {
-  if (type === "DEBIT") {
+  if (type === 'DEBIT') {
     transactions = transactions.filter(
-      (tx) => tx.attributes.amount.valueInBaseUnits < 0
+      (tx) => tx.attributes.amount.valueInBaseUnits < 0,
     );
   }
 
-  if (type === "CREDIT") {
+  if (type === 'CREDIT') {
     transactions = transactions.filter(
-      (tx) => tx.attributes.amount.valueInBaseUnits > 0
+      (tx) => tx.attributes.amount.valueInBaseUnits > 0,
     );
   }
 
@@ -269,19 +290,19 @@ function tabulateTransactions_(type, transactions) {
     const attributes = transaction.attributes;
     return [
       new Date(attributes.createdAt),
-      attributes.settledAt ? new Date(attributes.settledAt) : "",
+      attributes.settledAt ? new Date(attributes.settledAt) : '',
       attributes.status,
-      attributes.amount.valueInBaseUnits < 0 ? "DEBIT" : "CREDIT",
+      attributes.amount.valueInBaseUnits < 0 ? 'DEBIT' : 'CREDIT',
       attributes.amount.currencyCode,
       Math.abs(Number(attributes.amount.value)),
       attributes.description,
       transaction.relationships.category.data
         ? transaction.relationships.category.data.id
-        : "",
+        : '',
       transaction.relationships.parentCategory.data
         ? transaction.relationships.parentCategory.data.id
-        : "",
-      transaction.relationships.tags.data.map((tag) => tag.id).join(","),
+        : '',
+      transaction.relationships.tags.data.map((tag) => tag.id).join(','),
       attributes.message,
     ];
   });
@@ -289,12 +310,12 @@ function tabulateTransactions_(type, transactions) {
 }
 
 const UP_ACCOUNTS_HEADINGS = [
-  "Account ID",
-  "Created At",
-  "Type",
-  "Name",
-  "Currency",
-  "Balance",
+  'Account ID',
+  'Created At',
+  'Type',
+  'Name',
+  'Currency',
+  'Balance',
 ];
 
 /**
@@ -305,7 +326,7 @@ const UP_ACCOUNTS_HEADINGS = [
  * @customfunction
  */
 function UP_ACCOUNTS() {
-  return up_("accounts", {
+  return up_('accounts', {
     tabulate(data) {
       const table = data.map((account) => {
         const attributes = account.attributes;
@@ -324,9 +345,9 @@ function UP_ACCOUNTS() {
 }
 
 const UP_CATEGORIES_HEADINGS = [
-  "Category ID",
-  "Category Name",
-  "Parent Category ID",
+  'Category ID',
+  'Category Name',
+  'Parent Category ID',
 ];
 
 /**
@@ -337,21 +358,21 @@ const UP_CATEGORIES_HEADINGS = [
  * @customfunction
  */
 function UP_CATEGORIES() {
-  return up_("categories", {
+  return up_('categories', {
     tabulate(data) {
       const table = data.map((category) => [
         category.id,
         category.attributes.name,
         category.relationships.parent.data
           ? category.relationships.parent.data.id
-          : "all",
+          : 'all',
       ]);
-      return [UP_CATEGORIES_HEADINGS, ...table, ["all", "All", ""]];
+      return [UP_CATEGORIES_HEADINGS, ...table, ['all', 'All', '']];
     },
   });
 }
 
-const UP_TAGS_HEADINGS = ["Tag"];
+const UP_TAGS_HEADINGS = ['Tag'];
 
 /**
  * Retrieve all your user-defined tags.
@@ -361,7 +382,7 @@ const UP_TAGS_HEADINGS = ["Tag"];
  * @customfunction
  */
 function UP_TAGS() {
-  return up_("tags", {
+  return up_('tags', {
     tabulate(data) {
       const table = data.map((tag) => [tag.id]);
       return [UP_TAGS_HEADINGS, ...table];
@@ -377,18 +398,18 @@ function UP_TAGS() {
  * @customfunction
  */
 function UP_PING() {
-  return up_("util/ping", {
+  return up_('util/ping', {
     paginate: false,
-    tabulate: (response) => ["Up API Status", response.meta.statusEmoji],
+    tabulate: (response) => ['Up API Status', response.meta.statusEmoji],
   });
 }
 
-function up_(path, { paginate = true, tabulate }) {
-  const token = CacheService.getUserCache().get("UP_API_TOKEN");
+function up_(path, {paginate = true, tabulate}) {
+  const token = CacheService.getUserCache().get('UP_API_TOKEN');
   if (!token) {
     return [
-      "ERROR",
-      "Token not provided",
+      'ERROR',
+      'Token not provided',
       'Please navigate to "Up API" → "Set Up..."',
     ];
   }
@@ -398,17 +419,17 @@ function up_(path, { paginate = true, tabulate }) {
     const data = [];
     do {
       const json = UrlFetchApp.fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {Authorization: `Bearer ${token}`},
         muteHttpExceptions: true,
       }).getContentText();
       const response = JSON.parse(json);
       if (response.errors) {
-        return [["API Error"]].concat(
+        return [['API Error']].concat(
           response.errors.map((error) => [
             error.status,
             error.title,
             error.detail,
-          ])
+          ]),
         );
       }
 
@@ -422,7 +443,7 @@ function up_(path, { paginate = true, tabulate }) {
 
     return tabulate(data);
   } catch (error) {
-    return ["ERROR", error.message];
+    return ['ERROR', error.message];
   }
 }
 
@@ -433,10 +454,10 @@ function encodeDate_(date) {
 /* 🙈 */
 function hackyUriEncode_(query) {
   return query
-    .split("&")
+    .split('&')
     .map((kv) => {
-      const [k, v] = kv.split("=");
+      const [k, v] = kv.split('=');
       return `${k}=${encodeURIComponent(v)}`;
     })
-    .join("&");
+    .join('&');
 }

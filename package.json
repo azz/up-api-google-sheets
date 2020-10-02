@@ -22,9 +22,19 @@
   "scripts": {
     "jsdoc2md": "jsdoc2md",
     "test": "xo",
-    "fix": "xo --fix && prettier --write up.js"
+    "fix": "xo --fix",
+    "clasp": "clasp"
   },
   "xo": {
-    "space": true
+    "space": true,
+    "prettier": true
+  },
+  "prettier": {
+    "singleQuote": true,
+    "bracketSpacing": false,
+    "trailingComma": "all"
+  },
+  "dependencies": {
+    "@google/clasp": "^2.3.0"
   }
 }
