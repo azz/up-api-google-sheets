@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "target": "es2015",
+    "noEmit": true
+  },
+  "include": [
+    "*.js",
+    "@types/google-apps-script/google-apps-script.spreadsheet"
+  ]
+}
