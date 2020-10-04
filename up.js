@@ -180,7 +180,7 @@ function insert_(formula, numberOfColumns, range) {
 }
 
 function insertUpPing_() {
-  insert_('=UP_PING()', 1);
+  insert_('=UP_PING()', 2);
 }
 
 function insertUpTags_() {
