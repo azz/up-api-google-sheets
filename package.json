@@ -25,7 +25,8 @@
     "jsdoc2md": "jsdoc2md",
     "test": "xo && tsc -p jsconfig.json",
     "fix": "xo --fix",
-    "clasp": "clasp"
+    "clasp": "clasp",
+    "prettier": "prettier"
   },
   "xo": {
     "space": true,
