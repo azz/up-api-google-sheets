@@ -19,7 +19,7 @@ All the formulas provided by this script can be inserted from the "Up API" menu.
 
 You can share a sheet with someone else and they will have to use their own personal access token. None of your data will be shared.
 
-Your token will only be stored for one hour. After this time your data will be cleared and you will have to re-authenticate.
+Your token will only be stored for one day. After this time your data will be cleared and you will have to re-authenticate.
 
 ## Functions
 
