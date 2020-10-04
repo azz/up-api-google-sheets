@@ -54,7 +54,7 @@ const THEME = new Map([
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
-  ui.createAddonMenu(APP_NAME)
+  ui.createMenu(APP_NAME)
     .addItem('Set Up...', 'init_')
     .addItem('Log out', 'logOut_')
     .addSeparator()
@@ -120,7 +120,7 @@ function init_() {
   if (statusRange.isBlank()) {
     insert_('=UP_PING()', 1, statusRange);
     // Define a named range we can use to force other formulas to recalculate
-    doc.setNamedRange('UpStatus', statusRange);
+    doc.setNamedRange('UpYeah', statusRange);
   }
 }
 
@@ -410,7 +410,7 @@ function up_(path, {paginate = true, tabulate}) {
     return [
       'ERROR',
       'Token not provided',
-      'Please navigate to "Up API" → "Set Up..."',
+      'Please navigate to "Add-ons" → "Up API" → "Set Up..."',
     ];
   }
 
