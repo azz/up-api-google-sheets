@@ -2,9 +2,9 @@
  * @OnlyCurrentDoc Limits the script to only accessing the current sheet.
  */
 
-/// <reference types="@types/google-apps-script/google-apps-script.spreadsheet" />
 /* global CacheService, UrlFetchApp, SpreadsheetApp */
 /* eslint-disable no-unused-vars */
+/* eslint-disable max-params */
 
 const {ThemeColorType, RecalculationInterval} = SpreadsheetApp;
 
@@ -99,11 +99,7 @@ function init_() {
     return;
   }
 
-  CacheService.getUserCache().put(
-    'UP_API_TOKEN',
-    result.getResponseText(),
-    TOKEN_CACHE_DURATION_SECONDS,
-  );
+  TokenCache.store(result.getResponseText());
 
   const theme = SpreadsheetApp.getActive().getSpreadsheetTheme();
   for (const [key, value] of THEME.entries()) {
@@ -116,19 +112,40 @@ function init_() {
   // Force a recalculation every hour (and re-authentication when appropriate)
   doc.setRecalculationInterval(RecalculationInterval.HOUR);
 
-  const statusRange = sheet.getRange('A1:B1');
+  const statusRange = sheet.getRange('A1:B2');
   if (statusRange.isBlank()) {
     insert_('=UP_PING()', 1, statusRange);
     // Define a named range we can use to force other formulas to recalculate
-    doc.setNamedRange('UpYeah', statusRange);
+    doc.setNamedRange('Yeah', statusRange);
+  }
+}
+
+class TokenCache {
+  static get cache() {
+    return CacheService.getUserCache();
+  }
+
+  static store(token, expiry = TOKEN_CACHE_DURATION_SECONDS) {
+    const expiryDate = new Date();
+    expiryDate.setSeconds(expiryDate.getSeconds() + expiry);
+    this.cache.put('token', token, expiry);
+    this.cache.put('tokenExpiry', expiryDate.toISOString(), expiry);
+  }
+
+  static retrieve() {
+    return this.cache.getAll(['token', 'tokenExpiry']);
+  }
+
+  static expire() {
+    const hadToken = Boolean(this.cache.get('token'));
+    this.cache.removeAll(['token', 'tokenExpiry']);
+    return hadToken;
   }
 }
 
 function logOut_() {
-  const cache = CacheService.getUserCache();
   const ui = SpreadsheetApp.getUi();
-  if (cache.get('UP_API_TOKEN')) {
-    cache.remove('UP_API_TOKEN');
+  if (TokenCache.expire()) {
     ui.alert(
       APP_NAME,
       'You have been successfully logged out.',
@@ -163,34 +180,37 @@ function insert_(formula, numberOfColumns, range) {
 }
 
 function insertUpPing_() {
-  insert_('=UP_PING()', 1);
+  insert_('=UP_PING()', 2);
 }
 
 function insertUpTags_() {
-  insert_('=UP_TAGS()', UP_TAGS_HEADINGS.length);
+  insert_('=UP_TAGS(Yeah)', UP_TAGS_HEADINGS.length);
 }
 
 function insertUpTransactions_() {
-  insert_('=UP_TRANSACTIONS()', UP_TRANSACTIONS_HEADINGS.length);
+  insert_('=UP_TRANSACTIONS(Yeah)', UP_TRANSACTIONS_HEADINGS.length);
 }
 
 function insertUpTransactionsBetween_() {
   insert_(
-    '=UP_TRANSACTIONS_BETWEEN(TODAY() - 30, TODAY())',
+    '=UP_TRANSACTIONS_BETWEEN(Yeah, TODAY() - 30, TODAY())',
     UP_TRANSACTIONS_HEADINGS.length,
   );
 }
 
 function insertUpTransactionsForAccount_() {
-  insert_('=UP_TRANSACTIONS_FOR_ACCOUNT()', UP_TRANSACTIONS_HEADINGS.length);
+  insert_(
+    '=UP_TRANSACTIONS_FOR_ACCOUNT(Yeah)',
+    UP_TRANSACTIONS_HEADINGS.length,
+  );
 }
 
 function insertUpAccounts_() {
-  insert_('=UP_ACCOUNTS()', UP_ACCOUNTS_HEADINGS.length);
+  insert_('=UP_ACCOUNTS(Yeah)', UP_ACCOUNTS_HEADINGS.length);
 }
 
 function insertUpCategories_() {
-  insert_('=UP_CATEGORIES()', UP_CATEGORIES_HEADINGS.length);
+  insert_('=UP_CATEGORIES(Yeah)', UP_CATEGORIES_HEADINGS.length);
 }
 
 const UP_TRANSACTIONS_HEADINGS = [
@@ -210,13 +230,14 @@ const UP_TRANSACTIONS_HEADINGS = [
 /**
  * Retrieve transactions across all of your Up accounts.
  *
+ * @param yeah Dependencies.
  * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
  * @param {"DEBIT" | "CREDIT"} type Further filter transactions by direction (ALL/CREDIT/DEBIT).
  * @return Up Transactions
  * @example =UP_TRANSACTIONS("filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
  * @customfunction
  */
-function UP_TRANSACTIONS(filterQuery = '', type = 'ALL') {
+function UP_TRANSACTIONS(yeah, filterQuery = '', type = null) {
   return up_(`transactions?${hackyUriEncode_(filterQuery)}`, {
     tabulate: (data) => tabulateTransactions_(type, data),
   });
@@ -225,6 +246,7 @@ function UP_TRANSACTIONS(filterQuery = '', type = 'ALL') {
 /**
  * Retrieve all transactions between two dates.
  *
+ * @param yeah Dependencies.
  * @param {Date} since The start date.
  * @param {Date} until The end date.
  * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
@@ -234,7 +256,13 @@ function UP_TRANSACTIONS(filterQuery = '', type = 'ALL') {
  * @return Up Transactions
  * @customfunction
  */
-function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = '', type = 'ALL') {
+function UP_TRANSACTIONS_BETWEEN(
+  yeah,
+  since,
+  until,
+  filterQuery = '',
+  type = null,
+) {
   return up_(
     'transactions' +
       `?filter[since]=${encodeDate_(since)}` +
@@ -249,6 +277,7 @@ function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = '', type = 'ALL') {
 /**
  * Retrieve transactions from a specific Up account.
  *
+ * @param yeah Dependencies.
  * @param {string} accountId The Up Account ID.
  * @param {string} filterQuery The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`.
  * @param {"DEBIT" | "CREDIT"} type Further filter transactions by direction (ALL/CREDIT/DEBIT).
@@ -257,9 +286,10 @@ function UP_TRANSACTIONS_BETWEEN(since, until, filterQuery = '', type = 'ALL') {
  * @customfunction
  */
 function UP_TRANSACTIONS_FOR_ACCOUNT(
+  yeah,
   accountId,
   filterQuery = '',
-  type = 'ALL',
+  type = null,
 ) {
   if (!accountId) {
     return 'accountId is required.';
@@ -322,10 +352,11 @@ const UP_ACCOUNTS_HEADINGS = [
  * Retrieve all your Up accounts, including balances.
  *
  * @return Up Accounts
+ * @param yeah Dependencies.
  * @example =UP_ACCOUNTS() // Get all accounts.
  * @customfunction
  */
-function UP_ACCOUNTS() {
+function UP_ACCOUNTS(yeah) {
   return up_('accounts', {
     tabulate(data) {
       const table = data.map((account) => {
@@ -354,10 +385,11 @@ const UP_CATEGORIES_HEADINGS = [
  * Retrieve all Up pre-defined categories, including parent categories.
  *
  * @return Up Categories
+ * @param yeah Dependencies.
  * @example =UP_CATEGORIES() // Get all categories.
  * @customfunction
  */
-function UP_CATEGORIES() {
+function UP_CATEGORIES(yeah) {
   return up_('categories', {
     tabulate(data) {
       const table = data.map((category) => [
@@ -378,10 +410,11 @@ const UP_TAGS_HEADINGS = ['Tag'];
  * Retrieve all your user-defined tags.
  *
  * @return Up Tags
+ * @param yeah Dependencies.
  * @example =UP_TAGS() // Get all tags.
  * @customfunction
  */
-function UP_TAGS() {
+function UP_TAGS(yeah) {
   return up_('tags', {
     tabulate(data) {
       const table = data.map((tag) => [tag.id]);
@@ -398,14 +431,18 @@ function UP_TAGS() {
  * @customfunction
  */
 function UP_PING() {
+  const {tokenExpiry} = TokenCache.retrieve();
   return up_('util/ping', {
     paginate: false,
-    tabulate: (response) => ['Up API Status', response.meta.statusEmoji],
+    tabulate: (response) => [
+      ['Up API Status', 'Token Expiry'],
+      [response.meta.statusEmoji, tokenExpiry],
+    ],
   });
 }
 
 function up_(path, {paginate = true, tabulate}) {
-  const token = CacheService.getUserCache().get('UP_API_TOKEN');
+  const {token} = TokenCache.retrieve();
   if (!token) {
     return [
       'ERROR',

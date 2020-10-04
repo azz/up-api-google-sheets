@@ -24,22 +24,22 @@ Your token will only be stored for one day. After this time your data will be cl
 ## Functions
 
 <dl>
-<dt><a href="#UP_TRANSACTIONS">UP_TRANSACTIONS(filterQuery, type)</a> </dt>
+<dt><a href="#UP_TRANSACTIONS">UP_TRANSACTIONS(yeah, filterQuery, type)</a> </dt>
 <dd><p>Retrieve transactions across all of your Up accounts.</p>
 </dd>
-<dt><a href="#UP_TRANSACTIONS_BETWEEN">UP_TRANSACTIONS_BETWEEN(since, until, filterQuery, type)</a> </dt>
+<dt><a href="#UP_TRANSACTIONS_BETWEEN">UP_TRANSACTIONS_BETWEEN(yeah, since, until, filterQuery, type)</a> </dt>
 <dd><p>Retrieve all transactions between two dates.</p>
 </dd>
-<dt><a href="#UP_TRANSACTIONS_FOR_ACCOUNT">UP_TRANSACTIONS_FOR_ACCOUNT(accountId, filterQuery, type)</a> </dt>
+<dt><a href="#UP_TRANSACTIONS_FOR_ACCOUNT">UP_TRANSACTIONS_FOR_ACCOUNT(yeah, accountId, filterQuery, type)</a> </dt>
 <dd><p>Retrieve transactions from a specific Up account.</p>
 </dd>
-<dt><a href="#UP_ACCOUNTS">UP_ACCOUNTS()</a> </dt>
+<dt><a href="#UP_ACCOUNTS">UP_ACCOUNTS(yeah)</a> </dt>
 <dd><p>Retrieve all your Up accounts, including balances.</p>
 </dd>
-<dt><a href="#UP_CATEGORIES">UP_CATEGORIES()</a> </dt>
+<dt><a href="#UP_CATEGORIES">UP_CATEGORIES(yeah)</a> </dt>
 <dd><p>Retrieve all Up pre-defined categories, including parent categories.</p>
 </dd>
-<dt><a href="#UP_TAGS">UP_TAGS()</a> </dt>
+<dt><a href="#UP_TAGS">UP_TAGS(yeah)</a> </dt>
 <dd><p>Retrieve all your user-defined tags.</p>
 </dd>
 <dt><a href="#UP_PING">UP_PING()</a> </dt>
@@ -49,110 +49,150 @@ Your token will only be stored for one day. After this time your data will be cl
 
 <a name="UP_TRANSACTIONS"></a>
 
-## UP\_TRANSACTIONS(filterQuery, type)
+## UP_TRANSACTIONS(yeah, filterQuery, type)
+
 Retrieve transactions across all of your Up accounts.
 
-**Kind**: global function
-**Returns**: Up Transactions
+**Kind**: global function  
+**Returns**: Up Transactions  
 **Customfunction**:
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| filterQuery | <code>string</code> |  | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
-| type | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code>ALL</code> | Further filter transactions by direction (ALL/CREDIT/DEBIT). |
+| Param       | Type                                                              | Default       | Description                                                                         |
+| ----------- | ----------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| yeah        |                                                                   |               | Dependencies.                                                                       |
+| filterQuery | <code>string</code>                                               |               | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
+| type        | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code></code> | Further filter transactions by direction (ALL/CREDIT/DEBIT).                        |
 
 **Example**
+
 ```js
 =UP_TRANSACTIONS("filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
 ```
+
 <a name="UP_TRANSACTIONS_BETWEEN"></a>
 
-## UP\_TRANSACTIONS\_BETWEEN(since, until, filterQuery, type)
+## UP_TRANSACTIONS_BETWEEN(yeah, since, until, filterQuery, type)
+
 Retrieve all transactions between two dates.
 
-**Kind**: global function
-**Returns**: Up Transactions
+**Kind**: global function  
+**Returns**: Up Transactions  
 **Customfunction**:
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| since | <code>Date</code> |  | The start date. |
-| until | <code>Date</code> |  | The end date. |
-| filterQuery | <code>string</code> |  | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
-| type | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code>ALL</code> | Further filter transactions by direction (ALL/CREDIT/DEBIT). |
+| Param       | Type                                                              | Default       | Description                                                                         |
+| ----------- | ----------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| yeah        |                                                                   |               | Dependencies.                                                                       |
+| since       | <code>Date</code>                                                 |               | The start date.                                                                     |
+| until       | <code>Date</code>                                                 |               | The end date.                                                                       |
+| filterQuery | <code>string</code>                                               |               | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
+| type        | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code></code> | Further filter transactions by direction (ALL/CREDIT/DEBIT).                        |
 
 **Example**
+
 ```js
 =UP_TRANSACTIONS_BETWEEN(TODAY() - 7, TODAY()) // All transactions in the last week.
 ```
+
 **Example**
+
 ```js
 =UP_TRANSACTIONS_BETWEEN(A1, B1) // All transactions between the dates set in cells `A1` and `B1`.
 ```
+
 <a name="UP_TRANSACTIONS_FOR_ACCOUNT"></a>
 
-## UP\_TRANSACTIONS\_FOR\_ACCOUNT(accountId, filterQuery, type)
+## UP_TRANSACTIONS_FOR_ACCOUNT(yeah, accountId, filterQuery, type)
+
 Retrieve transactions from a specific Up account.
 
-**Kind**: global function
-**Returns**: Up Transactions
+**Kind**: global function  
+**Returns**: Up Transactions  
 **Customfunction**:
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| accountId | <code>string</code> |  | The Up Account ID. |
-| filterQuery | <code>string</code> |  | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
-| type | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code>ALL</code> | Further filter transactions by direction (ALL/CREDIT/DEBIT). |
+| Param       | Type                                                              | Default       | Description                                                                         |
+| ----------- | ----------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
+| yeah        |                                                                   |               | Dependencies.                                                                       |
+| accountId   | <code>string</code>                                               |               | The Up Account ID.                                                                  |
+| filterQuery | <code>string</code>                                               |               | The filter querystring to use, e.g. `"filter[status]=HELD&filter[category]=booze"`. |
+| type        | <code>&quot;DEBIT&quot;</code> \| <code>&quot;CREDIT&quot;</code> | <code></code> | Further filter transactions by direction (ALL/CREDIT/DEBIT).                        |
 
 **Example**
+
 ```js
 =UP_TRANSACTIONS_FOR_ACCOUNT("aaaa-bbbb-cccc-dddd-eee") // All transactions for the specified account.
 ```
+
 <a name="UP_ACCOUNTS"></a>
 
-## UP\_ACCOUNTS()
+## UP_ACCOUNTS(yeah)
+
 Retrieve all your Up accounts, including balances.
 
-**Kind**: global function
-**Returns**: Up Accounts
+**Kind**: global function  
+**Returns**: Up Accounts  
 **Customfunction**:
+
+| Param | Description   |
+| ----- | ------------- |
+| yeah  | Dependencies. |
+
 **Example**
+
 ```js
 =UP_ACCOUNTS() // Get all accounts.
 ```
+
 <a name="UP_CATEGORIES"></a>
 
-## UP\_CATEGORIES()
+## UP_CATEGORIES(yeah)
+
 Retrieve all Up pre-defined categories, including parent categories.
 
-**Kind**: global function
-**Returns**: Up Categories
+**Kind**: global function  
+**Returns**: Up Categories  
 **Customfunction**:
+
+| Param | Description   |
+| ----- | ------------- |
+| yeah  | Dependencies. |
+
 **Example**
+
 ```js
 =UP_CATEGORIES() // Get all categories.
 ```
+
 <a name="UP_TAGS"></a>
 
-## UP\_TAGS()
+## UP_TAGS(yeah)
+
 Retrieve all your user-defined tags.
 
-**Kind**: global function
-**Returns**: Up Tags
+**Kind**: global function  
+**Returns**: Up Tags  
 **Customfunction**:
+
+| Param | Description   |
+| ----- | ------------- |
+| yeah  | Dependencies. |
+
 **Example**
+
 ```js
 =UP_TAGS() // Get all tags.
 ```
+
 <a name="UP_PING"></a>
 
-## UP\_PING()
+## UP_PING()
+
 Ping the Up API to validate your token.
 
-**Kind**: global function
-**Returns**: Up Ping
-**Customfunction**:
+**Kind**: global function  
+**Returns**: Up Ping  
+**Customfunction**:  
 **Example**
+
 ```js
 =UP_PING() // Ping the API.
 ```
