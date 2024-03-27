@@ -10,7 +10,7 @@ const {ThemeColorType, RecalculationInterval} = SpreadsheetApp;
 
 const TOKEN_CACHE_DURATION_SECONDS = 60 * 60 * 24;
 const TOKEN_CACHE_DURATION_HUMAN = '1 day';
-const MAX_RECORDS = 1000;
+const MAX_RECORDS = 200;
 
 const APP_NAME = 'Up API';
 
