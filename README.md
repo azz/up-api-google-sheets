@@ -6,14 +6,15 @@ Prototype for using the [Up Banking API](https://developer.up.com.au/) in Google
 
 ## Installation
 
-1. Create a new Google Sheet and select "Tools" → "Script Editor".
+1. Create a new Google Sheet and select "Extensions" → "Apps Script".
 2. Paste in the contents of [`up.js`](https://github.com/azz/up-api-google-sheets/blob/master/up.js) into the code window.
-3. Save the script as "Up API" and accept the authorization request (you may need to proceed through a security warning, as this is not a published Addon).
-4. Reload your Google Sheet and select "Add-ons" → "Up API" → "Set Up...".
+3. Save the script, and rename the project to "Up API" and accept the authorization request (you may need to proceed through a security warning, as this is not a published Addon).
+4. Click the "Run" button with the "onOpen" function selected.
+5. Go back to your Google Sheet and you should have a new "Up API" drop-down. Select"Up API" → "Set Up...".
 
 ## Usage
 
-Once you have authenticated ("Add-ons" → "Up API" → "Set Up..."), you will be able to insert formulas.
+Once you have authenticated ("Up API" → "Set Up..."), you will be able to insert formulas.
 
 All the formulas provided by this script can be inserted from the "Up API" menu. Doing so will insert the formula, apply some styling, then auto-size the columns. Alternatively, you can enter in the formulas manually.
 
@@ -42,7 +43,7 @@ Your token will only be stored for one day. After this time your data will be cl
 <dt><a href="#UP_TAGS">UP_TAGS(yeah)</a> </dt>
 <dd><p>Retrieve all your user-defined tags.</p>
 </dd>
-<dt><a href="#UP_PING">UP_PING()</a> </dt>
+<dt><a href="#UP_PING">UP_PING(yeah)</a> </dt>
 <dd><p>Ping the Up API to validate your token.</p>
 </dd>
 </dl>
@@ -66,7 +67,7 @@ Retrieve transactions across all of your Up accounts.
 **Example**
 
 ```js
-=UP_TRANSACTIONS("filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
+=UP_TRANSACTIONS(Yeah, "filter[category]=takeaway", "DEBIT") // All outgoing transactions classified as "takeaway".
 ```
 
 <a name="UP_TRANSACTIONS_BETWEEN"></a>
@@ -90,13 +91,13 @@ Retrieve all transactions between two dates.
 **Example**
 
 ```js
-=UP_TRANSACTIONS_BETWEEN(TODAY() - 7, TODAY()) // All transactions in the last week.
+=UP_TRANSACTIONS_BETWEEN(Yeah, TODAY() - 7, TODAY()) // All transactions in the last week.
 ```
 
 **Example**
 
 ```js
-=UP_TRANSACTIONS_BETWEEN(A1, B1) // All transactions between the dates set in cells `A1` and `B1`.
+=UP_TRANSACTIONS_BETWEEN(Yeah, A1, B1) // All transactions between the dates set in cells `A1` and `B1`.
 ```
 
 <a name="UP_TRANSACTIONS_FOR_ACCOUNT"></a>
@@ -119,7 +120,7 @@ Retrieve transactions from a specific Up account.
 **Example**
 
 ```js
-=UP_TRANSACTIONS_FOR_ACCOUNT("aaaa-bbbb-cccc-dddd-eee") // All transactions for the specified account.
+=UP_TRANSACTIONS_FOR_ACCOUNT(Yeah, "aaaa-bbbb-cccc-dddd-eee") // All transactions for the specified account.
 ```
 
 <a name="UP_ACCOUNTS"></a>
@@ -139,7 +140,7 @@ Retrieve all your Up accounts, including balances.
 **Example**
 
 ```js
-=UP_ACCOUNTS() // Get all accounts.
+=UP_ACCOUNTS(Yeah) // Get all accounts.
 ```
 
 <a name="UP_CATEGORIES"></a>
@@ -159,7 +160,7 @@ Retrieve all Up pre-defined categories, including parent categories.
 **Example**
 
 ```js
-=UP_CATEGORIES() // Get all categories.
+=UP_CATEGORIES(Yeah) // Get all categories.
 ```
 
 <a name="UP_TAGS"></a>
@@ -179,12 +180,12 @@ Retrieve all your user-defined tags.
 **Example**
 
 ```js
-=UP_TAGS() // Get all tags.
+=UP_TAGS(Yeah) // Get all tags.
 ```
 
 <a name="UP_PING"></a>
 
-## UP_PING()
+## UP_PING(yeah)
 
 Ping the Up API to validate your token.
 
@@ -194,5 +195,5 @@ Ping the Up API to validate your token.
 **Example**
 
 ```js
-=UP_PING() // Ping the API.
+=UP_PING(Yeah) // Ping the API.
 ```
